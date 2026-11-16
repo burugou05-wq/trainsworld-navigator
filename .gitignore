@@ -1,0 +1,6 @@
+dist/
+.agents/
+node_modules/
+*.save
+*.twtime
+*.tmp

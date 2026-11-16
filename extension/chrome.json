@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "Trainsworld Navigator",
+  "version": "1.0.0",
+  "description": "Trainsworld のセーブから駅と経路を検索します。",
+  "minimum_chrome_version": "116",
+  "permissions": ["sidePanel"],
+  "side_panel": { "default_path": "index.html" },
+  "background": { "service_worker": "background.js" },
+  "action": { "default_title": "Trainsworld 乗換案内" }
+}

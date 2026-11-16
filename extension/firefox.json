@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Trainsworld Navigator",
+  "version": "1.0.0",
+  "description": "Trainsworld のセーブから駅と経路を検索します。",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "trainsworld-navigator@local.invalid",
+      "strict_min_version": "121.0",
+      "data_collection_permissions": { "required": ["none"] }
+    }
+  },
+  "sidebar_action": { "default_panel": "index.html", "default_title": "Trainsworld 乗換案内", "open_at_install": false },
+  "background": { "scripts": ["background.js"] },
+  "action": { "default_title": "Trainsworld 乗換案内" }
+}
