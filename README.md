@@ -1,5 +1,7 @@
 # Trainsworld Navigator
 
+[English documentation](README.en.md)
+
 **Trainsworld のセーブから、自分で作った鉄道網の乗換を検索。**
 
 ブラウザーゲーム [Trainsworld](https://anita.garden/trainsworld/) 向けの非公式ルートプランナーです。ゲーム内の駅・路線・停車順を使い、出発・到着時刻を指定して検索できます。Web版と Chrome・Firefox のサイドバー版があります。
