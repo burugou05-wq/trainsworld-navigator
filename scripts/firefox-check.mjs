@@ -4,6 +4,7 @@ import path from 'node:path';
 import { importSave } from '../src/save.mjs';
 
 const file = process.env.NAVIGATOR_TEST_SAVE;
+const english = process.env.NAVIGATOR_TEST_LANG === 'en';
 if (!file) throw Error('Set NAVIGATOR_TEST_SAVE.');
 const network = await importSave(new Blob([await readFile(file)]));
 const active = `document.querySelector('#active-save .stats dd')?.textContent === ${JSON.stringify(String(network.stations.length))}`;
@@ -41,6 +42,19 @@ try {
   }
   await run('browsingContext.setViewport', { context, viewport: { width: 365, height: 900 } });
   await run('browsingContext.navigate', { context, url: 'http://127.0.0.1:4174/', wait: 'complete' });
+  const language = english ? 'en' : 'ja';
+  if ((await evaluate('document.documentElement.lang')).value !== language) {
+    await evaluate(`{
+      const select = document.querySelector('#language');
+      select.value = '${language}';
+      select.dispatchEvent(new Event('change'));
+    }`);
+    for (let i = 0; i < 50; i++) {
+      if ((await evaluate('document.documentElement.lang')).value === language) break;
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+  }
+  assert.equal((await evaluate('document.documentElement.lang')).value, language);
   const { sharedId } = await evaluate("document.querySelector('#save-files')");
   await run('input.setFiles', { context, element: { sharedId }, files: [path.resolve(file)] });
   for (let i = 0; i < 50; i++) {
@@ -53,7 +67,7 @@ try {
   }
   document.querySelector('#journey').requestSubmit();
   document.querySelector('.itinerary-top').innerText`);
-  assert.match(result.value, /乗換 0回/);
+  assert.match(result.value, english ? /Transfers: 0/ : /乗換 0回/);
   await run('browsingContext.close', { context });
   console.log('Firefox', session.capabilities.browserVersion, 'temporary MV3 installation and shared web UI:', result.value.replaceAll('\n', ' '));
 } finally {

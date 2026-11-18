@@ -1,3 +1,5 @@
+import { t } from './locale.mjs';
+
 const HOUR = 3600;
 const DAY = 24 * HOUR;
 const bands = [
@@ -51,7 +53,8 @@ export function clockLabel(time, reference) {
   const day = Math.floor(rounded / 1440);
   const minute = rounded - day * 1440;
   const relative = day - Math.floor(reference / DAY);
-  const prefix = relative === 1 ? '翌日 ' : relative === -1 ? '前日 ' :
-    relative > 1 ? relative + '日後 ' : relative < -1 ? -relative + '日前 ' : '';
+  const prefix = relative === 1 ? t('翌日 ', 'Next day ') : relative === -1 ? t('前日 ', 'Previous day ') :
+    relative > 1 ? t(relative + '日後 ', '+' + relative + ' days ') :
+      relative < -1 ? t(-relative + '日前 ', relative + ' days ') : '';
   return prefix + String(Math.floor(minute / 60)).padStart(2, '0') + ':' + String(minute % 60).padStart(2, '0');
 }

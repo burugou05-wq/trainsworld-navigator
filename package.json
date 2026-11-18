@@ -1,6 +1,6 @@
 {
   "name": "trainsworld-navigator",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Local-first route planning and railway maps for Trainsworld save files.",
   "keywords": ["trainsworld", "railway", "route-planner", "save-game", "webextension", "local-first"],
   "private": true,

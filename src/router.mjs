@@ -1,5 +1,6 @@
 import { runSeconds } from './save.mjs';
 import { boardingTime, demandAt, travelTime } from './serviceclock.mjs';
+import { t } from './locale.mjs';
 
 class Heap {
   items = [];
@@ -30,7 +31,7 @@ class Heap {
   }
 }
 
-export const PERIODS = ['高需要', '中需要', '低需要'];
+export const PERIODS = [t('高需要', 'High demand'), t('中需要', 'Medium demand'), t('低需要', 'Low demand')];
 
 export function fareModel(network) {
   const f = network.fares;

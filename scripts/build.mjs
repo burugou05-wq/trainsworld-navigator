@@ -8,6 +8,7 @@ for (const target of ['web', 'chrome', 'firefox']) {
     await cp(new URL(file, root), new URL(file, out), { recursive: true });
   }
   if (target !== 'web') {
+    await cp(new URL('extension/_locales', root), new URL('_locales', out), { recursive: true });
     await cp(new URL('extension/' + target + '.json', root), new URL('manifest.json', out));
     await cp(new URL('extension/' + target + '.js', root), new URL('background.js', out));
   }

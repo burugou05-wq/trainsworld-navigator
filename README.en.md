@@ -23,6 +23,8 @@ Trainsworld Navigator is an unofficial companion to the browser game [Trainsworl
 
 The app supports verified rail and ferry records in TWG1 saves with TWT4–TWT6 track data. Bus services can appear in the catalogue, but generated bus stops are outside the route planner’s coverage. Journey times are estimates. The app processes saves locally and stores imported copies in your browser.
 
+Choose **English** or **日本語** in the header to switch the interface language. Station and service names come from your save and keep their original spelling.
+
 ## Browser sidebar
 
 Download the Chrome or Firefox ZIP from [GitHub Releases](https://github.com/burugou05-wq/trainsworld-navigator/releases/latest) and extract it. To build from source, run `npm run build` and use the corresponding folder in `dist`.

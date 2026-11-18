@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <title>乗換案内 - Trainsworld Navigator</title>
+  <title data-en="Route Planner - Trainsworld Navigator">乗換案内 - Trainsworld Navigator</title>
   <link rel="stylesheet" href="./styles.css">
   <script type="module" src="./src/app.mjs"></script>
 </head>
@@ -12,99 +12,99 @@
   <header class="mast">
     <div class="frame mast-content">
       <a class="brand" href="#search"><span class="rail-icon" aria-hidden="true">🚆</span><span>Trainsworld<span class="brand-sub"> Navigator</span></span></a>
-      <button id="theme" class="theme" type="button" aria-label="配色を切り替える">配色：自動</button>
+      <div class="display-controls"><select id="language" aria-label="Language / 言語"><option value="ja">日本語</option><option value="en">English</option></select><button id="theme" class="theme" type="button" aria-label="配色を切り替える" data-en-aria-label="Change color theme">配色：自動</button></div>
     </div>
   </header>
-  <nav class="nav" aria-label="メインメニュー">
+  <nav class="nav" aria-label="メインメニュー" data-en-aria-label="Main menu">
     <div class="frame tabs">
-      <a href="#search" data-page="search">乗換案内</a>
-      <a href="#lines" data-page="lines">駅・路線</a>
-      <a href="#map" data-page="map">路線図</a>
-      <a href="#saves" data-page="saves">セーブ管理</a>
+      <a href="#search" data-page="search" data-en="Route planner">乗換案内</a>
+      <a href="#lines" data-page="lines" data-en="Stations &amp; lines">駅・路線</a>
+      <a href="#map" data-page="map" data-en="Network map">路線図</a>
+      <a href="#saves" data-page="saves" data-en="Saves">セーブ管理</a>
     </div>
   </nav>
   <main class="frame layout">
     <div class="main-column">
       <section id="search" class="page">
-        <h1>乗換案内</h1>
+        <h1 data-en="Route planner">乗換案内</h1>
         <form id="journey" class="search-box">
           <div class="station-row">
             <div class="station-field">
-              <label for="from"><span class="mark">発</span> 出発駅</label>
-              <input id="from" type="search" placeholder="駅名を入力" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="from-list">
+              <label for="from"><span class="mark" aria-hidden="true">発</span><span data-en="Departure station"> 出発駅</span></label>
+              <input id="from" type="search" placeholder="駅名を入力" data-en-placeholder="Enter a station name" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="from-list">
               <div class="suggestions" id="from-list" role="listbox" hidden></div>
             </div>
-            <button id="swap" type="button" title="発着駅を入れ替える" aria-label="発着駅を入れ替える">⇄</button>
+            <button id="swap" type="button" title="発着駅を入れ替える" data-en-title="Swap departure and arrival stations" aria-label="発着駅を入れ替える" data-en-aria-label="Swap departure and arrival stations">⇄</button>
             <div class="station-field">
-              <label for="to"><span class="mark arrival">着</span> 到着駅</label>
-              <input id="to" type="search" placeholder="駅名を入力" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="to-list">
+              <label for="to"><span class="mark arrival" aria-hidden="true">着</span><span data-en="Arrival station"> 到着駅</span></label>
+              <input id="to" type="search" placeholder="駅名を入力" data-en-placeholder="Enter a station name" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="to-list">
               <div class="suggestions" id="to-list" role="listbox" hidden></div>
             </div>
           </div>
           <div class="options">
             <fieldset>
-              <legend>検索条件</legend>
-              <label><input type="radio" name="mode" value="fast" checked> 早い順</label>
-              <label><input type="radio" name="mode" value="transfers"> 乗換が少ない順</label>
-              <label id="fare-option"><input type="radio" name="mode" value="fare" disabled> 安い順</label>
+              <legend data-en="Sort routes by">検索条件</legend>
+              <label><input type="radio" name="mode" value="fast" checked><span data-en=" Fastest"> 早い順</span></label>
+              <label><input type="radio" name="mode" value="transfers"><span data-en=" Fewest transfers"> 乗換が少ない順</span></label>
+              <label id="fare-option"><input type="radio" name="mode" value="fare" disabled><span data-en=" Lowest fare"> 安い順</span></label>
             </fieldset>
             <div class="clock-controls">
-              <label for="time-mode">時刻指定
-                <select id="time-mode"><option value="depart">出発</option><option value="arrive">到着</option></select>
+              <label for="time-mode"><span data-en="Search by">時刻指定</span>
+                <select id="time-mode"><option value="depart" data-en="Depart at">出発</option><option value="arrive" data-en="Arrive by">到着</option></select>
               </label>
-              <label for="journey-time">ゲーム内時刻
+              <label for="journey-time"><span data-en="In-game time">ゲーム内時刻</span>
                 <input id="journey-time" type="time" value="08:00" required>
               </label>
             </div>
-            <button class="primary" type="submit">経路を検索</button>
+            <button class="primary" type="submit" data-en="Search routes">経路を検索</button>
           </div>
         </form>
         <p id="query-status" class="message" role="status"></p>
         <div id="results"></div>
         <div id="search-empty" class="box empty">
-          <h2>セーブデータから乗換案内</h2>
-          <p>Trainsworld のセーブを読み込むと、ゲーム内の駅を指定して検索できます。</p>
-          <button type="button" class="secondary pick">セーブを読み込む</button>
+          <h2 data-en="Plan routes from your save">セーブデータから乗換案内</h2>
+          <p data-en="Import a Trainsworld save to search your in-game railway network.">Trainsworld のセーブを読み込むと、ゲーム内の駅を指定して検索できます。</p>
+          <button type="button" class="secondary pick" data-en="Import a save">セーブを読み込む</button>
         </div>
       </section>
       <section id="lines" class="page" hidden>
-        <h1>駅・路線</h1>
+        <h1 data-en="Stations &amp; lines">駅・路線</h1>
         <div class="catalog box">
-          <label for="catalog-query">駅名・路線名</label>
-          <input id="catalog-query" type="search" placeholder="駅名・路線名を入力">
+          <label for="catalog-query" data-en="Station or line name">駅名・路線名</label>
+          <input id="catalog-query" type="search" placeholder="駅名・路線名を入力" data-en-placeholder="Enter a station or line name">
           <div id="catalog-results"></div>
         </div>
       </section>
       <section id="map" class="page" hidden>
-        <h1>路線図</h1>
+        <h1 data-en="Network map">路線図</h1>
         <div class="box map-box">
-          <div class="map-bar"><span>駅座標を結ぶ概略図</span><div><button id="zoom-out" aria-label="縮小">−</button><button id="zoom-in" aria-label="拡大">＋</button><button id="zoom-reset">全体</button></div></div>
-          <canvas id="network-map" aria-label="ゲーム内の路線概略図。路線や駅は駅・路線メニューからも参照できます。"></canvas>
+          <div class="map-bar"><span data-en="Schematic map based on station locations">駅座標を結ぶ概略図</span><div><button id="zoom-out" aria-label="縮小" data-en-aria-label="Zoom out">−</button><button id="zoom-in" aria-label="拡大" data-en-aria-label="Zoom in">＋</button><button id="zoom-reset" data-en="Reset">全体</button></div></div>
+          <canvas id="network-map" aria-label="ゲーム内の路線概略図。路線や駅は駅・路線メニューからも参照できます。" data-en-aria-label="Schematic map. You can also browse stations and lines from the menu."></canvas>
           <div id="map-detail"></div>
         </div>
       </section>
       <section id="saves" class="page" hidden>
-        <h1>セーブ管理</h1>
+        <h1 data-en="Saves">セーブ管理</h1>
         <div class="box">
-          <label class="drop" for="save-files" id="drop">セーブファイルをここにドロップ<br><span>またはクリックしてファイルを選択</span></label>
+          <label class="drop" for="save-files" id="drop"><span data-en="Drop a save file here">セーブファイルをここにドロップ</span><br><span data-en="or click to browse">またはクリックしてファイルを選択</span></label>
           <p id="import-status" class="message" role="status"></p>
           <div id="save-list"></div>
         </div>
       </section>
     </div>
-    <aside class="sidebar" aria-label="使用中のセーブ">
+    <aside class="sidebar" aria-label="使用中のセーブ" data-en-aria-label="Active save">
       <section class="rail-box">
-        <h2>使用中のセーブ</h2>
-        <div id="active-save" class="rail-body"><p class="muted">セーブが読み込まれていません。</p></div>
-        <div class="rail-actions"><button type="button" class="secondary pick">ファイルを選択</button><a href="#saves">セーブ管理 →</a></div>
+        <h2 data-en="Active save">使用中のセーブ</h2>
+        <div id="active-save" class="rail-body"><p class="muted" data-en="No save loaded.">セーブが読み込まれていません。</p></div>
+        <div class="rail-actions"><button type="button" class="secondary pick" data-en="Choose a file">ファイルを選択</button><a href="#saves" data-en="Manage saves →">セーブ管理 →</a></div>
       </section>
       <section class="rail-box">
-        <h2>検索について</h2>
-        <div class="rail-body note"><p>所要時間は、ゲーム内の停車順と運行頻度から計算した目安です。</p><p>待ち時間は運転間隔の半分が目安です。待機中に時間帯が変わると運行頻度を切り替えます。</p></div>
+        <h2 data-en="About route estimates">検索について</h2>
+        <div class="rail-body note"><p data-en="Travel times use in-game stopping patterns and service frequencies.">所要時間は、ゲーム内の停車順と運行頻度から計算した目安です。</p><p data-en="Estimated waits use half the service interval and account for frequency changes while you wait.">待ち時間は運転間隔の半分が目安です。待機中に時間帯が変わると運行頻度を切り替えます。</p></div>
       </section>
     </aside>
   </main>
-  <footer><div class="frame">Trainsworld Navigator <span>｜</span> <a href="https://anita.garden/trainsworld/" target="_blank" rel="noreferrer">ゲームを開く ↗</a></div></footer>
+  <footer><div class="frame">Trainsworld Navigator <span>｜</span> <a href="https://anita.garden/trainsworld/" target="_blank" rel="noreferrer" data-en="Open Trainsworld ↗">ゲームを開く ↗</a></div></footer>
   <input id="save-files" type="file" accept=".save,.gz,.twtime,application/octet-stream" multiple hidden>
 </body>
 </html>

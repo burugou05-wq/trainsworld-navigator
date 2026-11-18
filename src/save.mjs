@@ -1,3 +1,5 @@
+import { t } from './locale.mjs';
+
 const utf8 = new TextDecoder('utf-8', { fatal: true });
 const MAX_INPUT = 32 * 1024 * 1024;
 const MAX_EXPANDED = 96 * 1024 * 1024;
@@ -11,7 +13,7 @@ class Reader {
     this.pos = 0;
   }
   take(size) {
-    if (size > this.bytes.length - this.pos) throw Error('セーブデータが途中で途切れています。');
+    if (size > this.bytes.length - this.pos) throw Error(t('セーブデータが途中で途切れています。', "The save file ended unexpectedly."));
     const start = this.pos;
     this.pos += size;
     return this.bytes.subarray(start, this.pos);
@@ -24,7 +26,7 @@ class Reader {
       if (value > max) break;
       if (byte < 128) return value;
     }
-    throw Error('セーブデータに範囲外の数値があります。');
+    throw Error(t('セーブデータに範囲外の数値があります。', "The save contains an out-of-range number."));
   }
   sint() {
     const value = this.uint(Number.MAX_SAFE_INTEGER);
@@ -41,19 +43,19 @@ class Reader {
     const view = new DataView(new ArrayBuffer(4));
     view.setUint32(0, this.uint());
     const number = view.getFloat32(0);
-    if (!Number.isFinite(number)) throw Error('不正な浮動小数点数が含まれています。');
+    if (!Number.isFinite(number)) throw Error(t('不正な浮動小数点数が含まれています。', "The save contains an invalid decimal number."));
     return number;
   }
   double() {
     const bytes = this.take(8);
     const value = new DataView(bytes.buffer, bytes.byteOffset, 8).getFloat64(0, true);
-    if (!Number.isFinite(value)) throw Error('座標原点が不正です。');
+    if (!Number.isFinite(value)) throw Error(t('座標原点が不正です。', "Invalid coordinate origin."));
     return value;
   }
 }
 
 async function decompress(blob) {
-  if (blob.size > MAX_INPUT) throw Error('ファイルが大きすぎます（上限 32 MiB）。');
+  if (blob.size > MAX_INPUT) throw Error(t('ファイルが大きすぎます（上限 32 MiB）。', "The file exceeds the 32 MiB limit."));
   const prefix = new Uint8Array(await blob.slice(0, 2).arrayBuffer());
   if (prefix[0] !== 31 || prefix[1] !== 139) return new Uint8Array(await blob.arrayBuffer());
   const reader = blob.stream().pipeThrough(new DecompressionStream('gzip')).getReader();
@@ -66,7 +68,7 @@ async function decompress(blob) {
       total += value.length;
       if (total > MAX_EXPANDED) {
         await reader.cancel();
-        throw Error('展開後のサイズが上限を超えています。');
+        throw Error(t('展開後のサイズが上限を超えています。', "The decompressed file exceeds the size limit."));
       }
       chunks.push(value);
     }
@@ -85,10 +87,10 @@ async function decompress(blob) {
 export async function importSave(blob) {
   if (await blob.slice(0, 4).text() === 'TWN1') {
     const prefix = await blob.slice(4, 8).arrayBuffer();
-    if (prefix.byteLength !== 4) throw Error('所要時間付きセーブが途中で途切れています。');
+    if (prefix.byteLength !== 4) throw Error(t('所要時間付きセーブが途中で途切れています。', "The save with timing data ended unexpectedly."));
     const size = new DataView(prefix).getUint32(0, true);
     if (!size || size > MAX_INPUT || 8 + size >= blob.size || blob.size > MAX_INPUT + 8 * 1024 * 1024) {
-      throw Error('所要時間付きセーブの長さが不正です。');
+      throw Error(t('所要時間付きセーブの長さが不正です。', "Invalid length for a save with timing data."));
     }
     const network = await readSave(blob.slice(8, 8 + size));
     const profile = JSON.parse(await blob.slice(8 + size).text());
@@ -99,7 +101,7 @@ export async function importSave(blob) {
 }
 
 function applyTiming(network, profile) {
-  if (profile?.version !== 2 || !Array.isArray(profile.lines)) throw Error('所要時間データの形式が不正です。');
+  if (profile?.version !== 2 || !Array.isArray(profile.lines)) throw Error(t('所要時間データの形式が不正です。', "Invalid timing data format."));
   const valid = (values, length, min, max) => Array.isArray(values) && values.length === length &&
     values.every(value => Number.isFinite(value) && value >= min && value <= max);
   for (const record of profile.lines) {
@@ -110,7 +112,7 @@ function applyTiming(network, profile) {
         record.directions.length !== (line.oneWay ? 1 : 2) || !record.directions.every(d =>
           d && valid(d.km, count - 1, 0, 40075) && Array.isArray(d.periods) && d.periods.length === 3 &&
           d.periods.every(p => p && valid(p.ride, count - 1, 0.001, 86400) && valid(p.dwell, count, 0, 3600)))) {
-      throw Error('所要時間データが停車順と一致しません。');
+      throw Error(t('所要時間データが停車順と一致しません。', "Timing data does not match the stopping pattern."));
     }
     line.timing = record.directions;
   }
@@ -119,11 +121,11 @@ function applyTiming(network, profile) {
 async function readSave(blob) {
   const bytes = await decompress(blob);
   const reader = new Reader(bytes);
-  if (utf8.decode(reader.take(4)) !== 'TWG1') throw Error('Trainsworld の TWG1 セーブを選んでください。');
+  if (utf8.decode(reader.take(4)) !== 'TWG1') throw Error(t('Trainsworld の TWG1 セーブを選んでください。', "Choose a Trainsworld TWG1 save file."));
   const size = new DataView(reader.take(4).buffer, bytes.byteOffset + 4, 4).getUint32(0, true);
-  if (size > 16 * 1024 * 1024) throw Error('セーブの設定領域が大きすぎます。');
+  if (size > 16 * 1024 * 1024) throw Error(t('セーブの設定領域が大きすぎます。', "The save settings exceed the size limit."));
   const header = JSON.parse(utf8.decode(reader.take(size)));
-  if (header?.game !== 'anitabuilder' || header.format !== 1) throw Error('未対応のゲームまたはセーブ形式です。');
+  if (header?.game !== 'anitabuilder' || header.format !== 1) throw Error(t('未対応のゲームまたはセーブ形式です。', "Unsupported game or save format."));
   // The game's network fingerprint excludes this length-delimited save trailer.
   const end = bytes.length;
   if (end - reader.pos >= 8) {
@@ -131,7 +133,7 @@ async function readSave(blob) {
     if (tag === 'ERA1' || tag === 'ERA2') {
       const length = new DataView(bytes.buffer, bytes.byteOffset + end - 8, 4).getUint32(0, true);
       const trackEnd = end - 8 - length;
-      if (trackEnd < reader.pos + 21) throw Error('セーブ末尾の追加記録の長さが不正です。');
+      if (trackEnd < reader.pos + 21) throw Error(t('セーブ末尾の追加記録の長さが不正です。', "Invalid length for the additional data at the end of the save."));
       reader.bytes = bytes.subarray(0, trackEnd);
     }
   }
@@ -139,13 +141,15 @@ async function readSave(blob) {
 }
 
 function positiveId(id, items, label) {
-  if (!Number.isInteger(id) || id < 0 || id >= items.length) throw Error(`存在しない${label}が参照されています。`);
+  if (!Number.isInteger(id) || id < 0 || id >= items.length) {
+    throw Error(t(`存在しない${label}が参照されています。`, `The save refers to a missing ${label}.`));
+  }
   return id;
 }
 
 function readTrack(r, header) {
   const format = utf8.decode(r.take(4));
-  if (!['TWT4', 'TWT5', 'TWT6'].includes(format)) throw Error('この軌道形式には対応していません（対応形式 TWT4〜TWT6）。');
+  if (!['TWT4', 'TWT5', 'TWT6'].includes(format)) throw Error(t('この軌道形式には対応していません（対応形式 TWT4〜TWT6）。', "Unsupported track format. Supported versions are TWT4 through TWT6."));
   const frame = trackFrame(format, r.double(), r.double());
   const direction = r.uint(1);
   let x = 0, y = 0;
@@ -155,11 +159,12 @@ function readTrack(r, header) {
     const level = r.sint();
     const flags = r.uint(0xffff);
     if ((flags & ~STATION_FLAGS) || (!(flags & 2) && (flags & 4))) {
-      throw Error(`未確認の駅設定（駅ID ${id}、0x${flags.toString(16)}）が含まれています。`);
+      throw Error(t(`未確認の駅設定（駅ID ${id}、0x${flags.toString(16)}）が含まれています。`,
+        `Unsupported station settings (station ID ${id}, flags 0x${flags.toString(16)}).`));
     }
     const platform = flags & 2 ? r.uint(5000) : 0;
     const name = (flags & 4) || platform === 1 ? r.string() : '';
-    if (Math.abs(x) > 21e6 || Math.abs(y) > 25e6) throw Error('不正な駅座標が含まれています。');
+    if (Math.abs(x) > 21e6 || Math.abs(y) > 25e6) throw Error(t('不正な駅座標が含まれています。', "The save contains invalid station coordinates."));
     return { id, x, y, level, flags, platform, name, port: platform === 1, named: Boolean(flags & 0x100),
       upgrades: (flags >> 4) & 15, oneWay: Boolean(flags & 0x200) };
   }, 30000);
@@ -168,8 +173,9 @@ function readTrack(r, header) {
     a += r.sint();
     const b = a + r.sint();
     const flags = r.uint();
-    if (flags & ~0x47) throw Error(`未確認の線路設定（線路ID ${id}、0x${flags.toString(16)}）が含まれています。`);
-    const from = nodes[positiveId(a, nodes, '線路端点')], to = nodes[positiveId(b, nodes, '線路端点')];
+    if (flags & ~0x47) throw Error(t(`未確認の線路設定（線路ID ${id}、0x${flags.toString(16)}）が含まれています。`,
+      `Unsupported track settings (track ID ${id}, flags 0x${flags.toString(16)}).`));
+    const from = nodes[positiveId(a, nodes, t('線路端点', "track endpoint"))], to = nodes[positiveId(b, nodes, t('線路端点', "track endpoint"))];
     let px = from.x, py = from.y;
     const points = [[px, py], ...r.many(() => {
       px += r.sint() / 1000;
@@ -189,7 +195,7 @@ function readTrack(r, header) {
     const name = r.string();
     const color = r.uint(0xffffff);
     const typeFields = [r.uint(), r.uint(), r.uint()];
-    if (typeFields.some(Boolean)) throw Error('未照合の運行系統設定が含まれています。');
+    if (typeFields.some(Boolean)) throw Error(t('未照合の運行系統設定が含まれています。', "The save contains unsupported service settings."));
     const built = Boolean(r.uint(1));
     const trains = [r.uint(10000), r.uint(10000), r.uint(10000)];
     const dwell = r.uint(864000) / 10;
@@ -198,7 +204,7 @@ function readTrack(r, header) {
     let stop = 0;
     const stops = r.many(() => {
       stop += r.sint();
-      if (!nodes[stop]?.platform) throw Error('停車駅が駅として登録されていません。');
+      if (!nodes[stop]?.platform) throw Error(t('停車駅が駅として登録されていません。', "A stopping point is missing from the station table."));
       return stop;
     }, 30000);
     let edge = 0;
@@ -206,7 +212,7 @@ function readTrack(r, header) {
       const code = r.uint();
       edge += (code & 1) ? -Math.floor(code / 4) - 1 : Math.floor(code / 4);
       const reverse = ((code >> 1) ^ code) & 1;
-      positiveId(edge, edges, '線路');
+      positiveId(edge, edges, t('線路', "track"));
       return edge * 2 + reverse;
     });
     return {
@@ -219,12 +225,12 @@ function readTrack(r, header) {
   const buildings = [];
   const groups = new Map();
   const sections = [];
-  const lineAt = () => lines[positiveId(r.uint(), lines, '運行系統')];
+  const lineAt = () => lines[positiveId(r.uint(), lines, t('運行系統', "service"))];
   const lineRows = read => r.many(() => read(lineAt()), lines.length);
   const seen = new Set();
   while (r.pos < r.bytes.length) {
     const section = String.fromCharCode(...r.take(4));
-    if (seen.has(section)) throw Error('同じ追加領域が複数あります。');
+    if (seen.has(section)) throw Error(t('同じ追加領域が複数あります。', "The save contains a duplicate data section."));
     seen.add(section);
     sections.push(section);
     switch (section) {
@@ -237,7 +243,7 @@ function readTrack(r, header) {
       case 'LNK1':
         links.push(...r.many(() => {
           const from = r.uint(), to = r.uint();
-          if (!nodes[from]?.platform || !nodes[to]?.platform) throw Error('乗換接続の駅IDが不正です。');
+          if (!nodes[from]?.platform || !nodes[to]?.platform) throw Error(t('乗換接続の駅IDが不正です。', "Invalid station ID in a transfer link."));
           return [from, to];
         }, 30000));
         break;
@@ -261,7 +267,7 @@ function readTrack(r, header) {
       case 'LFR2':
         r.many(() => {
           const station = nodes[r.uint()];
-          if (!station?.port) throw Error('船着場の駅IDが不正です。');
+          if (!station?.port) throw Error(t('船着場の駅IDが不正です。', "Invalid station ID for a ferry terminal."));
           station.berth = [station.x + r.sint() / 1000, station.y + r.sint() / 1000];
         }, nodes.length);
         lineRows(line => {
@@ -284,20 +290,20 @@ function readTrack(r, header) {
             y += r.sint() / 1000;
             return [x, y];
           }, 1000);
-          if (corners.length < 3) throw Error('駅施設の形状が不正です。');
+          if (corners.length < 3) throw Error(t('駅施設の形状が不正です。', "Invalid station facility geometry."));
           return { id, name, corners };
         }, 5000)) buildings.push(building);
         break;
       case 'LRT1':
         lineRows(line => {
           line.tph = [r.float(), r.float(), r.float()];
-          if (line.tph.some(rate => rate < 0 || rate > 10000)) throw Error('運行頻度が範囲外です。');
+          if (line.tph.some(rate => rate < 0 || rate > 10000)) throw Error(t('運行頻度が範囲外です。', "Service frequency is out of range."));
         });
         r.many(() => {
           lineAt(); r.uint(1); r.float();
           // Timing metadata also contains a raw 64-bit value.
           for (let i = 0; ; i++) {
-            if (i >= 10) throw Error('運行時間の値が不正です。');
+            if (i >= 10) throw Error(t('運行時間の値が不正です。', "Invalid service timing value."));
             if (r.take(1)[0] < 128) break;
           }
           r.uint();
@@ -328,7 +334,8 @@ function readTrack(r, header) {
         break;
       }
       default:
-        throw Error(`未確認の追加領域（${JSON.stringify(section)}、展開後 ${r.pos - 4} バイト）で読み込みを停止しました。`);
+        throw Error(t(`未確認の追加領域（${JSON.stringify(section)}、展開後 ${r.pos - 4} バイト）で読み込みを停止しました。`,
+          `Unsupported data section ${JSON.stringify(section)} at byte ${r.pos - 4} of the decompressed save.`));
     }
   }
 
@@ -337,7 +344,7 @@ function readTrack(r, header) {
   for (const station of stations) {
     [station.lon, station.lat] = frame.coordinates(station.x, station.y);
     station.built = station.port ? Boolean(station.flags & 4) : stationsWithTrack.has(station.id) || stopIds.has(station.id);
-    if (!station.name) station.name = `名称未設定（駅ID ${station.id}）`;
+    if (!station.name) station.name = t(`名称未設定（駅ID ${station.id}）`, `Unnamed station (ID ${station.id})`);
   }
   for (const line of lines) {
     if (line.group && !groups.has(line.group)) groups.set(line.group, { id: line.group });
@@ -370,7 +377,7 @@ function trackFrame(format, lon, lat) {
     scaleAt = () => 1;
   } else {
     const phi = lat * RAD, n = Math.sin(phi);
-    if (Math.abs(n) < 1e-8 || Math.abs(lat) >= 90) throw Error('旧形式の投影原点が不正です。');
+    if (Math.abs(n) < 1e-8 || Math.abs(lat) >= 90) throw Error(t('旧形式の投影原点が不正です。', "Invalid projection origin for the legacy save format."));
     const origin = RADIUS * Math.cos(phi) / n;
     const factor = origin * Math.tan(Math.PI / 4 + phi / 2) ** n;
     coordinates = (x, y) => {

@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
   "name": "Trainsworld Navigator",
-  "version": "1.0.0",
-  "description": "Trainsworld のセーブから駅と経路を検索します。",
+  "version": "1.1.0",
+  "default_locale": "en",
+  "description": "__MSG_description__",
   "browser_specific_settings": {
     "gecko": {
       "id": "trainsworld-navigator@local.invalid",
@@ -10,7 +11,7 @@
       "data_collection_permissions": { "required": ["none"] }
     }
   },
-  "sidebar_action": { "default_panel": "index.html", "default_title": "Trainsworld 乗換案内", "open_at_install": false },
+  "sidebar_action": { "default_panel": "index.html", "default_title": "__MSG_title__", "open_at_install": false },
   "background": { "scripts": ["background.js"] },
-  "action": { "default_title": "Trainsworld 乗換案内" }
+  "action": { "default_title": "__MSG_title__" }
 }

@@ -1,3 +1,5 @@
+import { t } from './locale.mjs';
+
 export function makeMap(canvas, onSelect) {
   const ctx = canvas.getContext('2d');
   let network, graph, selected, width = 1, height = 1, zoom = 1, offsetX = 0, offsetY = 0;
@@ -33,7 +35,7 @@ export function makeMap(canvas, onSelect) {
     ctx.font = '12px sans-serif';
     if (!network?.stations.length) {
       ctx.fillStyle = ink;
-      ctx.fillText('セーブを読み込むと路線図が表示されます。', 18, 30);
+      ctx.fillText(t('セーブを読み込むと路線図が表示されます。', 'Import a save to see the map.'), 18, 30);
       return;
     }
     const stations = network.stations.filter(s => s.built);

@@ -6,6 +6,7 @@ import { importSave } from '../src/save.mjs';
 
 const endpoint = 'http://127.0.0.1:' + (process.env.NAVIGATOR_CDP ?? '9372');
 const file = process.env.NAVIGATOR_TEST_SAVE;
+const english = process.env.NAVIGATOR_TEST_LANG === 'en';
 if (!file) throw Error('Set NAVIGATOR_TEST_SAVE to the path of a Tokyo test save.');
 const network = await importSave(new Blob([await readFile(file)]));
 const stationCount = JSON.stringify(String(network.stations.length));
@@ -51,14 +52,56 @@ async function loadAndSearch(url, width) {
   const { send, evaluate, wait } = tab;
   await send('Runtime.enable');
   await send('Page.enable');
+  await send('Page.addScriptToEvaluateOnNewDocument', {
+    source: `Object.defineProperty(navigator, 'language', { get: () => '${english ? 'en-US' : 'ja-JP'}' });`,
+  });
   await send('Page.navigate', { url });
   await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: false });
   await wait("document.readyState === 'complete' && !!document.querySelector('#save-files')");
   const { root } = await send('DOM.getDocument');
   const { nodeId } = await send('DOM.querySelector', { nodeId: root.nodeId, selector: '#save-files' });
-  const otherSave = process.env.NAVIGATOR_COMPARE_SAVE;
+  const otherSave = english ? undefined : process.env.NAVIGATOR_COMPARE_SAVE;
   await send('DOM.setFileInputFiles', { nodeId, files: otherSave ? [otherSave, file] : [file] });
-  await wait(active + " && document.querySelector('#import-status').textContent === 'セーブを読み込みました。'");
+  const imported = english ? 'Save imported.' : 'セーブを読み込みました。';
+  await wait(active + " && document.querySelector('#import-status').textContent === " + JSON.stringify(imported));
+  if (english) {
+    assert.equal(await evaluate('document.documentElement.lang'), 'en');
+    assert.equal(await evaluate("document.querySelector('#journey button[type=submit]').textContent"), 'Search routes');
+    await evaluate(`for (const [id, name] of [['from','東京'], ['to','横浜']]) {
+      const input = document.getElementById(id);
+      input.value = name;
+      input.dispatchEvent(new Event('input'));
+      document.getElementById(id + '-list').querySelector('[role=option]').click();
+    }
+    document.querySelector('#journey').requestSubmit();`);
+    await wait("!!document.querySelector('.timeline')");
+    assert.match(await evaluate("document.querySelector('.result-heading').innerText"), /東京.*横浜[\s\S]*Depart at/);
+    assert.match(await evaluate("document.querySelector('.itinerary-top').innerText"), /Transfers: 0/);
+    assert.ok(await evaluate("document.documentElement.scrollWidth <= innerWidth"));
+    const switchTo = language => evaluate(`{
+      const select = document.querySelector('#language');
+      select.value = '${language}';
+      select.dispatchEvent(new Event('change'));
+    }`);
+    await switchTo('ja');
+    await wait("document.documentElement.lang === 'ja' && " + active);
+    await switchTo('en');
+    await wait("document.documentElement.lang === 'en' && " + active);
+    await evaluate(`{
+      const input = document.querySelector('#save-files');
+      const transfer = new DataTransfer();
+      transfer.items.add(new File(['invalid'], 'invalid.save'));
+      input.files = transfer.files;
+      input.dispatchEvent(new Event('change'));
+    }`);
+    await wait("document.querySelector('#import-status').textContent.includes('invalid.save')");
+    assert.match(await evaluate("document.querySelector('#import-status').textContent"), /invalid\.save: /);
+    assert.equal(await evaluate(active), true);
+    assert.deepEqual(tab.errors, []);
+    tab.close();
+    console.log('English UI verified', width, url);
+    return;
+  }
   if (network.day === 305) {
     if (otherSave) {
       await evaluate(`for (const [id, name] of [['from','東京'], ['to','横浜']]) {
